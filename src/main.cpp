@@ -14,8 +14,11 @@ int main() {
     const int vertSpace = 16;
     const int baseSize = 6;
 
-    sf::Texture gradientTexture("../../src/Images/Gradient.png");
-    std::vector<sf::Sprite> c(vertNum, sf::Sprite(gradientTexture));
+    const int eyeSpace = 90;
+    const int eyeRadius = 20;
+
+    sf::Texture gradientTexture("../../src/Images/Gradient.png"); //gradient to be used in the metaball
+    std::vector<sf::Sprite> c(vertNum, sf::Sprite(gradientTexture)); //list of vectors for fish part sprite
     for (int i = 0; i < vertNum; i++) { //vert properties
         c[i].setOrigin( sf::Vector2f(1024 * c[i].getScale().x / 2,1024 * c[i].getScale().y / 2) );
         c[i].setPosition(sf::Vector2f(window.getSize().x/2, window.getSize().y/2));
@@ -23,6 +26,12 @@ int main() {
         c[i].setScale(sf::Vector2f(baseSize * .1 / ((i*0.5)+1.5), baseSize * .1 / ((i*0.5)+1.5)));
         c[i].setColor(sf::Color::White);
     }
+
+    sf::Vector2f eyesPosition; //fish eyes
+    sf::CircleShape eyes{eyeRadius};
+    eyes.setOrigin(sf::Vector2f(eyeRadius, eyeRadius));
+    eyes.setFillColor(sf::Color(0, 92, 184,255));
+
     sf::Vector2f cd[vertNum];
     for (int i = 0; i < vertNum; i++) {
         //cd[i].x = i*5;
@@ -33,9 +42,8 @@ int main() {
     sf::Shader metaballShader; //threshold shader to make metaballs
     if (!metaballShader.loadFromFile("../../src/Shaders/metaball.vert","../../src/Shaders/metaball.frag"))
         cerr << "Could not load metaball shader" << endl;
-    sf::RenderTexture metaballTexture{{1920u,1080}}; //render texture to apply shader to
+    sf::RenderTexture metaballTexture{{1920u,1080u}}; //render texture to apply shader to
     metaballTexture.setSmooth(true);
-
     sf::Sprite metaballSprite(metaballTexture.getTexture());
 
     //Update__________________________________________________________________________________________________________________________________________________________________________
@@ -88,6 +96,10 @@ int main() {
 
                 c[i+1].setPosition(sf::Vector2f(midPoint.x-normVector.x*desiredDistance,
                                                 midPoint.y-normVector.y*desiredDistance)); //apply distance constraint
+
+
+                if(i==0)
+                    eyesPosition = sf::Vector2f(normVector.x,normVector.y);
             }
         }
 
@@ -98,7 +110,7 @@ int main() {
         c[0].setPosition((sf::Vector2f)sf::priv::InputImpl::getMousePosition()); //move head to mouse position
 
         //Draw__________________________________________________________________________________________________________________________________________________________________________
-        window.clear(); //clear screen and metaball render texture
+        window.clear(sf::Color(24, 38, 66,255)); //clear screen and metaball render texture
         metaballTexture.clear(sf::Color::Transparent);
 
         for (int i = 0; i < vertNum; i++) { //render fish to render texture
@@ -107,6 +119,13 @@ int main() {
         metaballTexture.display();
 
         window.draw(metaballSprite, &metaballShader);
+
+        //set eye to position for both sides--
+        eyes.setPosition(sf::Vector2f(c[0].getPosition().x + eyesPosition.y * eyeSpace,c[0].getPosition().y + eyesPosition.x * -eyeSpace));
+        window.draw(eyes);
+        eyes.setPosition(sf::Vector2f(c[0].getPosition().x + eyesPosition.y * -eyeSpace,c[0].getPosition().y + eyesPosition.x * eyeSpace));
+        window.draw(eyes);
+
         window.display();
     }
 }
