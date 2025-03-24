@@ -12,7 +12,7 @@ void main()
     }
     else
     {
-        gl_FragColor = 1;//vec4(pixel.r, pixel.g, pixel.b, 1);
+        gl_FragColor = vec4(pixel.r, pixel.g, pixel.b, 1);
     }
 }
 

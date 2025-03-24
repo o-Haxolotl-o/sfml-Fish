@@ -18,20 +18,30 @@ int main() {
     const int eyeSpace = 90; //how far apart
     const int eyeRadius = 20; //eye size
 
+    const int finVert = 4;
+    const int finSpace = 128;
+    const float finSize = .8;
+
     sf::Texture gradientTexture("../../src/Images/Gradient.png"); //gradient to be used in the metaball
     std::vector<sf::Sprite> c(vertNum, sf::Sprite(gradientTexture)); //list of vectors for fish part sprite
     for (int i = 0; i < vertNum; i++) { //vert properties
-        c[i].setOrigin( sf::Vector2f(1024 * c[i].getScale().x / 2,1024 * c[i].getScale().y / 2) );
+        c[i].setOrigin( sf::Vector2f(gradientTexture.getSize().x * c[i].getScale().x / 2,gradientTexture.getSize().y * c[i].getScale().y / 2) );
         c[i].setPosition(sf::Vector2f(window.getSize().x/2, window.getSize().y/2));
-
         c[i].setScale(sf::Vector2f(baseSize * .1 / ((i*decreaseSize)+1.5), baseSize * .1 / ((i*decreaseSize)+1.5)));
-        c[i].setColor(sf::Color::White);
+        c[i].setColor(sf::Color((i+1)*10,(i+1)*5,(i+1)*15));
     }
 
-    sf::Vector2f eyesPosition; //fish eyes
+    sf::Vector2f eyesVector; //fish eyes
     sf::CircleShape eyes{eyeRadius};
     eyes.setOrigin(sf::Vector2f(eyeRadius, eyeRadius));
     eyes.setFillColor(sf::Color(0, 92, 184,255));
+
+    sf::Vector2f finsVector; //fish fins
+    sf::Texture finTexture("../../src/Images/Fin.png");
+    sf::Sprite fins(finTexture);
+    fins.setColor(sf::Color::Cyan);
+    fins.setOrigin(sf::Vector2f(finTexture.getSize().x/2, finTexture.getSize().y/2));
+    fins.setPosition(sf::Vector2f(1000, 500));
 
 
     sf::Shader metaballShader; //threshold shader to make metaballs
@@ -71,7 +81,9 @@ int main() {
 
 
                 if(i==0)
-                    eyesPosition = sf::Vector2f(normVector.x,normVector.y);
+                    eyesVector = sf::Vector2f(normVector.x,normVector.y);
+                if(i==3)
+                    finsVector = sf::Vector2f(normVector.x,normVector.y);
             }
         }
         
@@ -85,15 +97,31 @@ int main() {
         for (int i = 0; i < vertNum; i++) { //draw fish to render texture
                 metaballTexture.draw(c[i]);
         }
+
+        //set fin to position for both sides--
+        fins.setRotation(sf::radians( atan2(finsVector.y,finsVector.x)+1) );
+
+        fins.setScale(sf::Vector2f(finSize,finSize));
+        fins.setPosition(sf::Vector2f(c[finVert].getPosition().x + finsVector.y * finSpace,c[finVert].getPosition().y + finsVector.x * -finSpace));
+        metaballTexture.draw(fins);
+
+        fins.setRotation(sf::radians( atan2(finsVector.y,finsVector.x)-4) );
+        fins.setScale(sf::Vector2f(-finSize,finSize));
+        fins.setPosition(sf::Vector2f(c[finVert].getPosition().x + finsVector.y * -finSpace,c[finVert].getPosition().y + finsVector.x * finSpace));
+        metaballTexture.draw(fins);
+        //------------------------------------
+
         metaballTexture.display(); //finish metaball render
 
         window.draw(metaballSprite, &metaballShader); //draw metaballs to screen
 
         //set eye to position for both sides--
-        eyes.setPosition(sf::Vector2f(c[0].getPosition().x + eyesPosition.y * eyeSpace,c[0].getPosition().y + eyesPosition.x * -eyeSpace));
+        eyes.setPosition(sf::Vector2f(c[0].getPosition().x + eyesVector.y * eyeSpace,c[0].getPosition().y + eyesVector.x * -eyeSpace));
         window.draw(eyes);
-        eyes.setPosition(sf::Vector2f(c[0].getPosition().x + eyesPosition.y * -eyeSpace,c[0].getPosition().y + eyesPosition.x * eyeSpace));
+        eyes.setPosition(sf::Vector2f(c[0].getPosition().x + eyesVector.y * -eyeSpace,c[0].getPosition().y + eyesVector.x * eyeSpace));
         window.draw(eyes);
+        //------------------------------------
+
 
         window.display();
     }
