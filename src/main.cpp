@@ -18,7 +18,7 @@ int main() {
     const int eyeSpace = 90; //how far apart
     const int eyeRadius = 20; //eye size
 
-    const int finVert = 4;
+    const int finVert = 3;
     const int finSpace = 128;
     const float finSize = .8;
 
@@ -28,8 +28,19 @@ int main() {
         c[i].setOrigin( sf::Vector2f(gradientTexture.getSize().x * c[i].getScale().x / 2,gradientTexture.getSize().y * c[i].getScale().y / 2) );
         c[i].setPosition(sf::Vector2f(window.getSize().x/2, window.getSize().y/2));
         c[i].setScale(sf::Vector2f(baseSize * .1 / ((i*decreaseSize)+1.5), baseSize * .1 / ((i*decreaseSize)+1.5)));
-        c[i].setColor(sf::Color((i+1)*10,(i+1)*5,(i+1)*15));
+        c[i].setColor(sf::Color((i+1)*15,(i+1)*5,(i+1)*15));
     }
+
+    sf::Texture tailTexture("../../src/Images/Tail.png"); //tail sprite to be used in the metaball
+    c[vertNum-1].setTexture(tailTexture);
+    c[vertNum-1].scale(sf::Vector2f(baseSize*.5,baseSize*.5));
+
+    sf::Shader metaballShader; //threshold shader to make metaballs
+    if (!metaballShader.loadFromFile("../../src/Shaders/metaball.vert","../../src/Shaders/metaball.frag"))
+        cerr << "Could not load metaball shader" << endl;
+    sf::RenderTexture metaballTexture{{1920u,1080u}}; //render texture to apply shader to
+    metaballTexture.setSmooth(true); //doesn't seem to do anything bc of the shader
+    sf::Sprite metaballSprite(metaballTexture.getTexture());
 
     sf::Vector2f eyesVector; //fish eyes
     sf::CircleShape eyes{eyeRadius};
@@ -44,13 +55,6 @@ int main() {
     fins.setPosition(sf::Vector2f(1000, 500));
 
 
-    sf::Shader metaballShader; //threshold shader to make metaballs
-    if (!metaballShader.loadFromFile("../../src/Shaders/metaball.vert","../../src/Shaders/metaball.frag"))
-        cerr << "Could not load metaball shader" << endl;
-    sf::RenderTexture metaballTexture{{1920u,1080u}}; //render texture to apply shader to
-    metaballTexture.setSmooth(true);
-    sf::Sprite metaballSprite(metaballTexture.getTexture());
-
     //Update__________________________________________________________________________________________________________________________________________________________________________
     while (window.isOpen())
     {
@@ -61,10 +65,9 @@ int main() {
                 window.close();
             }
         }
-
+        c[0].setPosition((sf::Vector2f)sf::priv::InputImpl::getMousePosition()); //move head to mouse position
         //distance constraint
         for (int i = 0; i < vertNum; i++) {
-            if (i < vertNum - 1) {
                 float desiredDistance = vertSpace; // how far apart for each vertex
                 sf::Vector2f vector = c[i].getPosition()-c[i+1].getPosition(); //direction to next vertex
                 float A = vector.x;
@@ -79,26 +82,25 @@ int main() {
                 c[i+1].setPosition(sf::Vector2f(midPoint.x-normVector.x*desiredDistance,
                                                 midPoint.y-normVector.y*desiredDistance)); //apply distance constraint
 
-
                 if(i==0)
                     eyesVector = sf::Vector2f(normVector.x,normVector.y);
-                if(i==3)
+                if(i==finVert)
                     finsVector = sf::Vector2f(normVector.x,normVector.y);
-            }
+                if(i==vertNum-1)
+                    c[i].setRotation(sf::radians( atan2(normVector.y,normVector.x)+1.5));
         }
         
 
-        c[0].setPosition((sf::Vector2f)sf::priv::InputImpl::getMousePosition()); //move head to mouse position
 
         //Draw__________________________________________________________________________________________________________________________________________________________________________
         window.clear(sf::Color(24, 38, 66,255)); //clear screen and metaball render texture
         metaballTexture.clear(sf::Color::Transparent); //reset metaballs
 
         for (int i = 0; i < vertNum; i++) { //draw fish to render texture
-                metaballTexture.draw(c[i]);
+            metaballTexture.draw(c[i]);
         }
 
-        //set fin to position for both sides--
+        //set fin to position for both sides & draw--
         fins.setRotation(sf::radians( atan2(finsVector.y,finsVector.x)+1) );
 
         fins.setScale(sf::Vector2f(finSize,finSize));
